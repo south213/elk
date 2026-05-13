@@ -1,0 +1,100 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: postgres
+  namespace: task-management
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: postgres
+  template:
+    metadata:
+      labels:
+        app: postgres
+    spec:
+      containers:
+      - name: postgres
+        image: registry.aliyuncs.com/library/postgres:13
+        ports:
+        - containerPort: 5432
+        env:
+        - name: POSTGRES_DB
+          value: taskdb
+        - name: POSTGRES_USER
+          value: postgres
+        - name: POSTGRES_PASSWORD
+          value: password
+        volumeMounts:
+        - name: postgres-data
+          mountPath: /var/lib/postgresql/data
+        - name: init-db
+          mountPath: /docker-entrypoint-initdb.d
+      volumes:
+      - name: postgres-data
+        persistentVolumeClaim:
+          claimName: postgres-pvc
+      - name: init-db
+        configMap:
+          name: postgres-init
+
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: postgres
+  namespace: task-management
+spec:
+  selector:
+    app: postgres
+  ports:
+  - protocol: TCP
+    port: 5432
+    targetPort: 5432
+
+---
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: postgres-pvc
+  namespace: task-management
+spec:
+  accessModes:
+    - ReadWriteOnce
+  resources:
+    requests:
+      storage: 1Gi
+
+---
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: postgres-init
+  namespace: task-management
+data:
+  init.sql: |
+    -- 创建数据库和用户
+    CREATE USER postgres WITH PASSWORD 'password';
+    CREATE DATABASE taskdb OWNER postgres;
+
+    -- 连接到taskdb数据库
+    \c taskdb;
+
+    -- 创建tasks表
+    CREATE TABLE tasks (
+        id SERIAL PRIMARY KEY,
+        title VARCHAR(100) NOT NULL,
+        description TEXT,
+        created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+        updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+    );
+
+    -- 创建索引
+    CREATE INDEX idx_tasks_created_at ON tasks(created_at);
+
+    -- 插入示例数据
+    INSERT INTO tasks (title, description) VALUES 
+    ('学习Kubernetes', '了解K8s的基本概念和架构'),
+    ('配置ELK', '设置Elasticsearch, Logstash, Kibana'),
+    ('部署微服务', '将应用部署到Kubernetes集群'),
+    ('监控应用', '使用Prometheus和Grafana监控应用性能');

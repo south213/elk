@@ -1,0 +1,45 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: logstash
+  namespace: task-management
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: logstash
+  template:
+    metadata:
+      labels:
+        app: logstash
+    spec:
+      containers:
+      - name: logstash
+        image: registry.aliyuncs.com/elastic/logstash:7.15.0
+        ports:
+        - containerPort: 5044
+        volumeMounts:
+        - name: logstash-config
+          mountPath: /usr/share/logstash/pipeline
+        - name: logstash-data
+          mountPath: /usr/share/logstash/data
+      volumes:
+      - name: logstash-config
+        configMap:
+          name: logstash-config
+      - name: logstash-data
+        emptyDir: {}
+
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: logstash
+  namespace: task-management
+spec:
+  selector:
+    app: logstash
+  ports:
+  - protocol: TCP
+    port: 5044
+    targetPort: 5044

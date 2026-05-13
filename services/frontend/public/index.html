@@ -1,0 +1,230 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Task Management System</title>
+    <script src="https://cdn.jsdelivr.net/npm/react@18.0.0/umd/react.development.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/react-dom@18.0.0/umd/react-dom.development.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/@babel/standalone/babel.js"></script>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.3/css/all.min.css">
+</head>
+<body>
+    <div id="root"></div>
+
+    <script type="text/babel">
+        const { useState, useEffect } = React;
+
+        function App() {
+            const [tasks, setTasks] = useState([]);
+            const [title, setTitle] = useState('');
+            const [description, setDescription] = useState('');
+            const [editingTask, setEditingTask] = useState(null);
+            const [isLoading, setIsLoading] = useState(true);
+
+            useEffect(() => {
+                fetchTasks();
+            }, []);
+
+            const fetchTasks = async () => {
+                try {
+                    const response = await fetch('/api/tasks');
+                    const data = await response.json();
+                    setTasks(data);
+                    setIsLoading(false);
+                } catch (error) {
+                    console.error('Error fetching tasks:', error);
+                    setIsLoading(false);
+                }
+            };
+
+            const createTask = async (e) => {
+                e.preventDefault();
+                if (!title.trim()) return;
+
+                try {
+                    const response = await fetch('/api/tasks', {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json',
+                        },
+                        body: JSON.stringify({ title, description }),
+                    });
+                    const newTask = await response.json();
+                    setTasks([newTask, ...tasks]);
+                    setTitle('');
+                    setDescription('');
+                } catch (error) {
+                    console.error('Error creating task:', error);
+                }
+            };
+
+            const updateTask = async (e) => {
+                e.preventDefault();
+                if (!editingTask || !title.trim()) return;
+
+                try {
+                    await fetch(`/api/tasks/${editingTask.id}`, {
+                        method: 'PUT',
+                        headers: {
+                            'Content-Type': 'application/json',
+                        },
+                        body: JSON.stringify({ title, description }),
+                    });
+                    setTasks(tasks.map(task => 
+                        task.id === editingTask.id 
+                            ? { ...task, title, description }
+                            : task
+                    ));
+                    setEditingTask(null);
+                    setTitle('');
+                    setDescription('');
+                } catch (error) {
+                    console.error('Error updating task:', error);
+                }
+            };
+
+            const deleteTask = async (id) => {
+                try {
+                    await fetch(`/api/tasks/${id}`, {
+                        method: 'DELETE',
+                    });
+                    setTasks(tasks.filter(task => task.id !== id));
+                } catch (error) {
+                    console.error('Error deleting task:', error);
+                }
+            };
+
+            const startEdit = (task) => {
+                setEditingTask(task);
+                setTitle(task.title);
+                setDescription(task.description);
+            };
+
+            const cancelEdit = () => {
+                setEditingTask(null);
+                setTitle('');
+                setDescription('');
+            };
+
+            if (isLoading) {
+                return <div className="flex justify-center items-center h-screen">
+                    <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-500"></div>
+                </div>;
+            }
+
+            return (
+                <div className="min-h-screen bg-gray-100">
+                    <header className="bg-blue-600 text-white p-4">
+                        <div className="max-w-6xl mx-auto">
+                            <h1 className="text-2xl font-bold">Task Management System</h1>
+                            <p className="text-blue-100">Manage your tasks efficiently with ELK logging</p>
+                        </div>
+                    </header>
+
+                    <main className="max-w-6xl mx-auto p-4">
+                        <div className="bg-white rounded-lg shadow-md p-6 mb-6">
+                            <h2 className="text-xl font-semibold mb-4">
+                                {editingTask ? 'Edit Task' : 'Create New Task'}
+                            </h2>
+                            <form onSubmit={editingTask ? updateTask : createTask}>
+                                <div className="mb-4">
+                                    <label className="block text-gray-700 text-sm font-bold mb-2">
+                                        Title
+                                    </label>
+                                    <input
+                                        type="text"
+                                        value={title}
+                                        onChange={(e) => setTitle(e.target.value)}
+                                        className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                                        placeholder="Enter task title"
+                                        required
+                                    />
+                                </div>
+                                <div className="mb-4">
+                                    <label className="block text-gray-700 text-sm font-bold mb-2">
+                                        Description
+                                    </label>
+                                    <textarea
+                                        value={description}
+                                        onChange={(e) => setDescription(e.target.value)}
+                                        className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                                        placeholder="Enter task description"
+                                        rows="3"
+                                    />
+                                </div>
+                                <div className="flex gap-2">
+                                    <button
+                                        type="submit"
+                                        className="bg-blue-600 text-white px-4 py-2 rounded-md hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500"
+                                    >
+                                        {editingTask ? 'Update Task' : 'Create Task'}
+                                    </button>
+                                    {editingTask && (
+                                        <button
+                                            type="button"
+                                            onClick={cancelEdit}
+                                            className="bg-gray-500 text-white px-4 py-2 rounded-md hover:bg-gray-600 focus:outline-none focus:ring-2 focus:ring-gray-500"
+                                        >
+                                            Cancel
+                                        </button>
+                                    )}
+                                </div>
+                            </form>
+                        </div>
+
+                        <div className="bg-white rounded-lg shadow-md p-6">
+                            <h2 className="text-xl font-semibold mb-4">Task List</h2>
+                            {tasks.length === 0 ? (
+                                <p className="text-gray-500 text-center py-8">No tasks yet. Create your first task!</p>
+                            ) : (
+                                <div className="space-y-4">
+                                    {tasks.map(task => (
+                                        <div key={task.id} className="border border-gray-200 rounded-lg p-4 hover:shadow-md transition-shadow">
+                                            <div className="flex justify-between items-start">
+                                                <div className="flex-1">
+                                                    <h3 className="font-semibold text-lg text-gray-800">{task.title}</h3>
+                                                    {task.description && (
+                                                        <p className="text-gray-600 mt-1">{task.description}</p>
+                                                    )}
+                                                    <p className="text-sm text-gray-500 mt-2">
+                                                        Created: {new Date(task.created_at).toLocaleString()}
+                                                    </p>
+                                                </div>
+                                                <div className="flex gap-2 ml-4">
+                                                    <button
+                                                        onClick={() => startEdit(task)}
+                                                        className="text-blue-600 hover:text-blue-800"
+                                                    >
+                                                        <i className="fas fa-edit"></i>
+                                                    </button>
+                                                    <button
+                                                        onClick={() => deleteTask(task.id)}
+                                                        className="text-red-600 hover:text-red-800"
+                                                    >
+                                                        <i className="fas fa-trash"></i>
+                                                    </button>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    ))}
+                                </div>
+                            )}
+                        </div>
+                    </main>
+
+                    <footer className="bg-gray-800 text-white p-4 mt-8">
+                        <div className="max-w-6xl mx-auto text-center">
+                            <p>Task Management System with ELK Stack</p>
+                            <p className="text-gray-400 text-sm mt-1">Powered by Kubernetes, Flask, and ELK</p>
+                        </div>
+                    </footer>
+                </div>
+            );
+        }
+
+        ReactDOM.render(<App />, document.getElementById('root'));
+    </script>
+</body>
+</html>

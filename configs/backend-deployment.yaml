@@ -1,0 +1,54 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: backend
+  namespace: task-management
+spec:
+  replicas: 3
+  selector:
+    matchLabels:
+      app: backend
+  template:
+    metadata:
+      labels:
+        app: backend
+    spec:
+      containers:
+      - name: backend
+        image: backend:latest
+        ports:
+        - containerPort: 5000
+        env:
+        - name: DB_HOST
+          value: postgres
+        - name: DB_NAME
+          value: taskdb
+        - name: DB_USER
+          value: postgres
+        - name: DB_PASSWORD
+          value: password
+        - name: REDIS_HOST
+          value: redis
+        - name: LOG_LEVEL
+          value: INFO
+        volumeMounts:
+        - name: logs
+          mountPath: /var/log/flask
+      volumes:
+      - name: logs
+        emptyDir: {}
+
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: backend
+  namespace: task-management
+spec:
+  selector:
+    app: backend
+  ports:
+  - protocol: TCP
+    port: 5000
+    targetPort: 5000
+  type: ClusterIP

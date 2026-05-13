@@ -1,0 +1,59 @@
+apiVersion: apps/v1
+kind: DaemonSet
+metadata:
+  name: filebeat
+  namespace: task-management
+  labels:
+    app: filebeat
+spec:
+  selector:
+    matchLabels:
+      app: filebeat
+  template:
+    metadata:
+      labels:
+        app: filebeat
+    spec:
+      containers:
+      - name: filebeat
+        image: registry.aliyuncs.com/elastic/filebeat:7.15.0
+        args: [
+          "-c", "/etc/filebeat/filebeat.yml",
+          "-e"
+        ]
+        volumeMounts:
+        - name: config
+          mountPath: /etc/filebeat/filebeat.yml
+          subPath: filebeat.yml
+        - name: logs
+          mountPath: /var/log/flask
+        - name: data
+          mountPath: /usr/share/filebeat/data
+      volumes:
+      - name: config
+        configMap:
+          name: filebeat-config
+      - name: logs
+        emptyDir: {}
+      - name: data
+        emptyDir: {}
+
+---
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: filebeat-config
+  namespace: task-management
+data:
+  filebeat.yml: |
+    filebeat.inputs:
+    - type: log
+      enabled: true
+      paths:
+        - /var/log/flask/app.log
+      fields:
+        service: flask-backend
+      fields_under_root: true
+
+    output.logstash:
+      hosts: ["logstash:5044"]
