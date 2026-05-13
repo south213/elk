@@ -15,7 +15,7 @@ spec:
     spec:
       containers:
       - name: backend
-        image: registry.cn-guangzhou.aliyuncs.com/my_elk/backend:latest
+        image: crpi-yd9kld5exm3ui8a0.cn-guangzhou.personal.cr.aliyuncs.com/my_elk/backend:latest
         ports:
         - containerPort: 5000
         env:

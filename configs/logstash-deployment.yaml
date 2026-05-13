@@ -15,7 +15,7 @@ spec:
     spec:
       containers:
       - name: logstash
-        image: registry.aliyuncs.com/elastic/logstash:7.15.0
+        image: docker.m.daocloud.io/elastic/logstash:7.15.0
         ports:
         - containerPort: 5044
         volumeMounts:

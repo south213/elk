@@ -15,7 +15,7 @@ spec:
     spec:
       containers:
       - name: elasticsearch
-        image: registry.aliyuncs.com/elastic/elasticsearch:7.15.0
+        image: docker.m.daocloud.io/elastic/elasticsearch:7.15.0
         ports:
         - containerPort: 9200
         - containerPort: 9300
@@ -42,10 +42,12 @@ spec:
   selector:
     app: elasticsearch
   ports:
-  - protocol: TCP
+  - name: http
+    protocol: TCP
     port: 9200
     targetPort: 9200
-  - protocol: TCP
+  - name: transport
+    protocol: TCP
     port: 9300
     targetPort: 9300
 

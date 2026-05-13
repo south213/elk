@@ -1,5 +1,5 @@
 # 使用国内Python基础镜像
-FROM registry.aliyuncs.com/library/python:3.9-slim
+FROM docker.m.daocloud.io/library/python:3.9-slim
 
 # 设置工作目录
 WORKDIR /app

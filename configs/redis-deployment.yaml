@@ -15,7 +15,7 @@ spec:
     spec:
       containers:
       - name: redis
-        image: registry.aliyuncs.com/library/redis:6.2-alpine
+        image: docker.m.daocloud.io/library/redis:6.2-alpine
         ports:
         - containerPort: 6379
         volumeMounts:

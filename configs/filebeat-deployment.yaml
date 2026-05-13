@@ -16,7 +16,7 @@ spec:
     spec:
       containers:
       - name: filebeat
-        image: registry.aliyuncs.com/elastic/filebeat:7.15.0
+        image: docker.m.daocloud.io/elastic/filebeat:7.15.0
         args: [
           "-c", "/etc/filebeat/filebeat.yml",
           "-e"
