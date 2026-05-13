@@ -3,9 +3,8 @@ kind: Ingress
 metadata:
   name: task-management-ingress
   namespace: task-management
-  annotations:
-    nginx.ingress.kubernetes.io/rewrite-target: /
 spec:
+  ingressClassName: nginx
   rules:
   - host: task-management.local
     http:
