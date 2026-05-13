@@ -43,3 +43,42 @@ spec:
   - protocol: TCP
     port: 5044
     targetPort: 5044
+
+---
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: logstash-config
+  namespace: task-management
+data:
+  logstash.conf: |
+    input {
+      beats {
+        port => 5044
+      }
+    }
+
+    filter {
+      mutate {
+        add_field => { "source" => "task-management-system" }
+      }
+
+      date {
+        match => [ "timestamp", "ISO8601" ]
+      }
+
+      mutate {
+        add_tag => [ "flask", "python" ]
+      }
+    }
+
+    output {
+      elasticsearch {
+        hosts => ["elasticsearch:9200"]
+        index => "task-management-logs-%{+YYYY.MM.dd}"
+      }
+
+      stdout {
+        codec => rubydebug
+      }
+    }
